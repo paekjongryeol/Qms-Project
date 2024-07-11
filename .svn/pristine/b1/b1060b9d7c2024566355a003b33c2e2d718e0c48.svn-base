@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qms.order.dao.OrderDao">
+					 
+	<resultMap type="com.qms.order.vo.OrderVO" id="orderMap">
+		<result property="orderNo" 		    	column="ORDER_NO"/>
+		<result property="compCd" 	        	column="COMP_CD"/>
+		<result property="orderStatus" 			column="ORDER_STATUS"/>
+		<result property="regDt" 		    	column="REG_DT"/>
+		<result property="regUserId" 	    	column="REG_USER_ID"/>
+		<result property="updDt" 		    	column="UPD_DT"/>
+		<result property="updUserId"	    	column="UPD_USER_ID"/>
+		<result property="deliveryDt" 	    	column="DELIVERY_DT"/>
+		<result property="itemCd" 	        	column="ITEM_CD"/>
+		<result property="orderQty" 	    	column="ORDER_QTY"/>
+		<result property="orderPrice" 			column="ORDER_PRICE"/>
+		<result property="compName"	 			column="COMP_NAME"/>
+		<result property="unitPrice" 			column="UNIT_PRICE"/>
+		<result property="itemName" 			column="ITEM_NAME"/>
+		<result property="deliveryDtFrom" 		column="DELIVERY_DT_FROM" />
+        <result property="deliveryDtTo" 		column="DELIVERY_DT_TO" />
+		
+	  </resultMap>
+	  
+	<select id="selectTotalOrderCount" resultType="integer">
+	 SELECT 
+	        COUNT(*)
+	    FROM
+	        TB_ORDER_INFO A,
+	        (
+	            SELECT  
+	                C.ORDER_NO,
+	                D.ITEM_NAME,
+	                D.UNIT_PRICE,
+	                C.ORDER_QTY,
+	                C.ORDER_PRICE,
+	                C.ITEM_CD 
+	            FROM 
+	                TB_ITEM_INFO D, 
+	                TB_ORDER_ITEM C 
+	            WHERE 
+	                D.ITEM_CD = C.ITEM_CD
+	        ) B
+	       WHERE  A.ORDER_NO = B.ORDER_NO
+		
+	
+	</select>
+	
+	<select id="selectOrderlist" resultMap="orderMap">
+		SELECT
+	        RN,	
+		    ORDER_NO,
+		    COMP_CD,
+		    ITEM_CD,
+		    ITEM_NAME,
+		    UNIT_PRICE,
+		    ORDER_QTY,
+		    ORDER_PRICE,
+		    ORDER_STATUS,
+		    DELIVERY_DT,
+		    REG_DT,
+		    COMP_NAME
+		FROM(
+		  SELECT
+		    ROWNUM AS RN,
+		    A.ORDER_NO,
+		    A.COMP_CD,
+		    B.ITEM_CD,
+		    C.ITEM_NAME,
+		    C.UNIT_PRICE,
+		    B.ORDER_QTY,
+		    B.ORDER_PRICE,
+		    A.ORDER_STATUS,
+		    A.DELIVERY_DT,
+		    A.REG_DT,
+		    D.COMP_NAME
+		FROM TB_ORDER_INFO A
+		JOIN TB_ORDER_ITEM B ON A.COMP_CD = B.COMP_CD
+		JOIN TB_ITEM_INFO C ON B.ITEM_CD = C.ITEM_CD    
+		JOIN TB_PARTNER_INFO D ON A.COMP_CD = D.COMP_CD
+	    WHERE A.ORDER_NO = B.ORDER_NO
+	    <if test="compName!=null and compName!=''">
+		and D.COMP_NAME like '%'||#{compName}||'%'
+		</if>
+		<if test="itemCd!=null and itemCd!=''">
+		and B.ITEM_CD like '%'||#{itemCd}||'%'
+		</if>
+		<if test="deliveryDtFrom != null and deliveryDtFrom != ''">
+		AND TO_CHAR(A.DELIVERY_DT, 'YYYY-MM-DD') <![CDATA[ >= ]]> #{deliveryDtFrom}
+		</if>
+		<if test="deliveryDtTo != null and deliveryDtTo != ''">
+		 AND TO_CHAR(A.DELIVERY_DT, 'YYYY-MM-DD') <![CDATA[ <= ]]> #{deliveryDtTo} 
+		</if>
+		  ORDER BY ORDER_NO ASC
+		)
+		
+	    WHERE RN<![CDATA[ > ]]>(#{currentPage}-1)*#{countPerPage} 
+		AND RN<![CDATA[ <= ]]>#{currentPage}*#{countPerPage}	 
+	</select>
+	
+	<select id="selectOrderDtlList" resultMap="orderMap">
+		SELECT
+	        RN,	
+		    ITEM_CD,
+		    ITEM_NAME,
+		    BOX_QTY,
+		    BOX_TYPE,
+		    UNIT_PRICE,
+		    ORDER_QTY,
+		    ORDER_PRICE
+		  
+		FROM(
+		  SELECT
+		    ROWNUM AS RN,
+		    B.ITEM_CD,
+		    C.ITEM_NAME,
+		    C.BOX_QTY,
+		    C.BOX_TYPE,
+		    C.UNIT_PRICE,
+		    B.ORDER_QTY,
+		    B.ORDER_PRICE
+		    
+		   
+		FROM TB_ORDER_INFO A
+		JOIN TB_ORDER_ITEM B ON A.COMP_CD = B.COMP_CD
+		JOIN TB_ITEM_INFO C ON B.ITEM_CD = C.ITEM_CD    
+		JOIN TB_PARTNER_INFO D ON A.COMP_CD = D.COMP_CD
+	   )
+	   
+	</select>
+	
+</mapper>

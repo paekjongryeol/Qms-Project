@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qms.plan.dao.PlanDao">
+					 
+	<resultMap type="com.qms.plan.vo.PlanInfoVO" id="planMap">
+		<result property="compCd" 		column="COMP_CD"/>
+		<result property="planDt" 		column="PLAN_DT"/>
+		<result property="itemCd" 		column="ITEM_CD"/>
+		<result property="planQty" 		column="PLAN_QTY"/>
+		<result property="orderQty" 	column="ORDER_QTY"/>
+		<result property="regDt" 		column="REG_DT"/>
+		<result property="regUserId" 	column="REG_USER_ID"/>
+		<result property="updDt" 		column="UPD_DT"/>
+		<result property="updUserId" 	column="UPD_USER_ID"/>
+		<result property="compName" 	column="COMP_NAME"/>
+		<result property="itemName" 	column="ITEM_NAME"/>
+	</resultMap>
+	<select id="selectPlanList" resultMap="planMap">
+		SELECT A.ITEM_CD, C.ITEM_NAME, B.ORDER_QTY, B.PLAN_QTY, (TO_CHAR(B.PLAN_DT,'DD'))PLAN_DT
+		FROM TB_PARTNER_ITEM A, (SELECT * FROM TB_PLAN_INFO WHERE PLAN_DT LIKE '%'||#{planDt}||'%')B, TB_ITEM_INFO C
+		WHERE A.COMP_CD = #{compCd}
+		AND A.COMP_CD = B.COMP_CD(+)
+		AND A.ITEM_CD = B.ITEM_CD(+)
+		AND A.ITEM_CD = C.ITEM_CD
+		AND B.ORDER_QTY != '0'
+		AND B.PLAN_QTY != '0'
+		<if test="itemCd != null and itemCd != ''">
+			and A.ITEM_CD like '%'||#{itemCd}||'%'
+		</if>
+	</select>
+	<delete id="deletePlan">
+		DELETE TB_PLAN_INFO
+		WHERE COMP_CD = #{compCd}
+		AND PLAN_DT LIKE '%'||#{planDt}||'%'
+	</delete>
+	<update id="insertPlan">
+    	<foreach collection="qtyList" item="item" open="INSERT ALL" close="SELECT * FROM DUAL" separator=" ">
+	        INTO TB_PLAN_INFO (
+	            COMP_CD,
+	            PLAN_DT,
+	            ITEM_CD,
+            	PLAN_QTY,
+            	ORDER_QTY,
+            	REG_DT,
+            	REG_USER_ID
+            )
+            VALUES (
+                #{compCd}, #{item.planDt}, #{item.itemCd}, #{item.planQty}, #{item.orderQty}, SYSDATE, #{regUserId}
+           	)
+    	</foreach>
+	</update>
+</mapper>

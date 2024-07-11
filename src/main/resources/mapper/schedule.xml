@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qms.myCode.dao.scheduleDao">
+					 
+	<resultMap type="com.qms.myCode.vo.scheduleVO" id="scheduleMap">
+	    <result property="scheduleSeq" 		column="schedule_seq"/>
+	    <result property="userId" 			column="user_id"/>
+	    <result property="title" 			column="title"/>
+	    <result property="content"	 		column="content"/>
+	    <result property="startTime" 		column="start_time"/>
+	    <result property="endTime" 			column="end_time"/>
+	    <result property="timeCd" 			column="time_cd"/>
+	    <result property="comName" 			column="com_name"/>
+	    <result property="scheduleYear" 	column="schedule_year"/>
+	    <result property="scheduleMonth" 	column="schedule_month"/>
+	    <result property="startDate" 	column="start_date"/>
+	    <result property="startHour" 	column="start_hour"/>
+	    <result property="startMinute" 	column="start_minute"/>
+	</resultMap>
+			
+	<select id="selectScheduleInfo" resultMap="scheduleMap">
+		 SELECT 
+            SCHEDULE_SEQ,
+            TITLE,
+            TO_CHAR(START_TIME, 'YYYY-MM-DD HH24:MI') AS START_TIME,
+            TO_CHAR(END_TIME, 'YYYY-MM-DD HH24:MI') AS END_TIME,
+            TO_CHAR(START_TIME, 'YYYY') AS SCHEDULE_YEAR,
+            TO_CHAR(START_TIME, 'MM') AS SCHEDULE_MONTH,
+            TIME_CD
+        FROM TB_USER_SCHEDULE
+		WHERE 1=1
+			<if test="scheduleYear != null and scheduleYear != ''">
+			    AND TO_CHAR(START_TIME, 'yyyy') = #{scheduleYear}
+			</if>
+			<if test="scheduleMonth != null and scheduleMonth != ''">
+			    AND TO_CHAR(START_TIME, 'mm') = #{scheduleMonth}
+			</if>
+	</select>
+			
+	<select id="selectScheduleModal" resultMap="scheduleMap">
+		    SELECT 
+	            A.SCHEDULE_SEQ,
+			    TO_CHAR(A.START_TIME, 'YYYY-MM-DD HH24:MI') AS START_TIME,
+			    TO_CHAR(A.END_TIME, 'YYYY-MM-DD HH24:MI') AS END_TIME,
+			    TO_CHAR(A.START_TIME, 'YYYY-MM-DD') AS SCHEDULE_DT,
+			    A.TITLE,
+			    A.TIME_CD,
+			    B.COM_NAME         	            
+	        FROM TB_USER_SCHEDULE A, TB_COM_CODE B
+	        WHERE A.TIME_CD = B.COM_CD
+	        AND B.COM_GRP_CD = 'AP07'
+			<if test="scheduleDt != null and scheduleDt != ''">
+			    AND TO_CHAR(A.START_TIME, 'YYYY-MM-DD') <![CDATA[ <= ]]> #{scheduleDt}
+			    AND TO_CHAR(A.END_TIME, 'YYYY-MM-DD')   <![CDATA[ >= ]]> #{scheduleDt}
+			</if>
+	</select>
+	
+	<select id="selectSchedulComboBox" resultMap="scheduleMap">
+		SELECT 
+		    COM_CD AS TIME_CD,
+		    COM_NAME
+		    FROM TB_COM_CODE
+		    WHERE COM_GRP_CD = 'AP07'
+	</select>
+	
+	<delete id="deleteScheduleInfo">	    
+		DELETE FROM TB_USER_SCHEDULE
+		    WHERE TO_CHAR(START_TIME,'YYYY-MM-DD') <![CDATA[ <= ]]> #{scheduleDt}
+		      AND TO_CHAR(END_TIME,'YYYY-MM-DD') <![CDATA[ >= ]]> #{scheduleDt}
+	</delete>
+
+
+	<update id="insertScheduleInfo">
+	    <foreach collection="schelist" item="item" open="INSERT ALL " index="index" close="SELECT * FROM DUAL" separator=" ">
+	        INTO TB_USER_SCHEDULE
+	        (SCHEDULE_SEQ, USER_ID, TITLE, START_TIME, END_TIME, TIME_CD)
+	        VALUES(
+	            (SELECT NVL(MAX(SCHEDULE_SEQ), 0) + (1+#{index}) FROM TB_USER_SCHEDULE WHERE USER_ID = #{userId}),
+	            #{userId},
+	            #{item.title},
+	            TO_DATE(#{item.startTime}, 'YYYY-MM-DD HH24:MI'),
+	            TO_DATE(#{item.endTime}, 'YYYY-MM-DD HH24:MI'),
+	            #{item.timeCd}
+	        )
+	    </foreach>
+	</update>
+
+
+
+</mapper>

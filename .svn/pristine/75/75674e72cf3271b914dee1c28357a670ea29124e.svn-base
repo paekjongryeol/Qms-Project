@@ -1,0 +1,74 @@
+package com.qms.common.service;
+
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.stereotype.Service;
+
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletResponse;
+
+@Service
+public class ExcelService {
+
+    public Workbook downloadExcel(HttpServletResponse response, List<?> dataList, String fileName, Map<String, String> headerMap) throws Exception {
+        try (Workbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("Data Sheet");
+
+            if (!dataList.isEmpty()) {
+                // 헤더 생성
+                createHeaderRow(sheet, headerMap);
+
+                // 데이터 행 생성
+                for (int rowNum = 0; rowNum < dataList.size(); rowNum++) {
+                    createCellRow(sheet, dataList.get(rowNum), rowNum + 1, headerMap);
+                }
+            }
+
+            // 파일 다운로드를 위한 설정
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setHeader("Content-Disposition", "attachment; filename=" + fileName);
+
+            // 파일 스트림을 응답에 쓰기
+            try (ServletOutputStream outputStream = response.getOutputStream()) {
+                workbook.write(outputStream);
+                response.flushBuffer();
+            }
+            return workbook;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private void createHeaderRow(Sheet sheet, Map<String, String> headerMap) {
+        Row headerRow = sheet.createRow(0);
+        int cellIndex = 0;
+        for (String header : headerMap.values()) {
+            headerRow.createCell(cellIndex++).setCellValue(header);
+        }
+    }
+
+    private void createCellRow(Sheet sheet, Object object, int rowNum, Map<String, String> headerMap) throws Exception {
+        Row cellRow = sheet.createRow(rowNum);
+        Field[] fields = object.getClass().getDeclaredFields();
+        Map<String, Object> fieldValues = new HashMap<>();
+        for (Field field : fields) {
+            field.setAccessible(true);
+            fieldValues.put(field.getName(), field.get(object));
+        }
+        int cellIndex = 0;
+        for (String key : headerMap.keySet()) {
+            Object value = fieldValues.get(key);
+            cellRow.createCell(cellIndex++).setCellValue(value != null ? value.toString() : "");
+        }
+        
+    }
+}

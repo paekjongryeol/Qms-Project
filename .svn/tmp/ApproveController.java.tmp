@@ -1,0 +1,165 @@
+package com.qms.approve.controller;
+
+<<<<<<< .mine
+
+import java.util.List;
+
+||||||| .r44
+=======
+import java.util.List;
+
+
+>>>>>>> .r93
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+<<<<<<< .mine
+import org.springframework.web.bind.annotation.ModelAttribute;
+||||||| .r44
+=======
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+>>>>>>> .r93
+import org.springframework.web.bind.annotation.RequestMapping;
+<<<<<<< .mine
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.qms.approve.service.ApproveService;
+import com.qms.code.service.CodeService;
+import com.qms.table.vo.common.ComCodeVO;
+import com.qms.user.vo.UserVO;
+||||||| .r44
+=======
+import org.springframework.web.bind.annotation.ResponseBody;
+>>>>>>> .r93
+
+<<<<<<< .mine
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+||||||| .r44
+=======
+import com.qms.table.vo.user.UserInfoVO;
+>>>>>>> .r93
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+
+import com.qms.approve.service.ApproveService;
+import com.qms.approve.vo.AprvVO;
+import com.qms.table.vo.approve.AprvFileVO;
+import com.qms.table.vo.approve.AprvInfoVO;
+import com.qms.table.vo.approve.AprvLineVO;
+
+
+@Controller
+public class ApproveController {
+
+	@Autowired
+	ApproveService service;
+	
+	@Autowired
+	CodeService CdService;
+	
+	/*
+	 *  기안서 작성
+     *  작성자 : 이성호
+     *  작성일 : 24.05.20
+	*/
+	@RequestMapping("/approve/write")
+	public String approveWrite() throws Exception{
+		return "approve/aprv01";
+	}
+	// 기안서 조회 페이지
+	@RequestMapping("/approve/search")
+	public String approveSearch(HttpServletRequest request, Model model) throws Exception{
+		
+		HttpSession session  = request.getSession();
+	    UserInfoVO uservo = (UserInfoVO) session.getAttribute("MallUser");
+	    model.addAttribute("vo", uservo);
+		
+		return "approve/aprv02";
+	}
+	
+	// 기안서 조회하기
+	@RequestMapping("/approve/approveList")
+	@ResponseBody
+	public List<AprvVO> selectApproveList(@ModelAttribute AprvVO vo, HttpServletRequest request) throws Exception{
+		
+		HttpSession session  = request.getSession();
+        UserInfoVO uservo = (UserInfoVO) session.getAttribute("MallUser");
+        vo.setUserId(uservo.getUserId());
+
+		if(vo.getSearchType().equals("0")) {    // 결재진행중
+			List<AprvVO> list = service.selectApprovingList(vo);
+			return list;
+	    }else if(vo.getSearchType().equals("1")) {  // 결재완료
+	    	List<AprvVO> list = service.selectApprovedList(vo);
+	    	return list;
+	    }else {
+	    	List<AprvVO> list = service.selectMyApproveList(vo);
+	    	return list;
+	    }
+		/*
+		int totalPage = service.selectTotalAprvCount(vo);
+		AprvVO aprvvo = new AprvVO();
+		
+		aprvvo.setApproveList(list);
+		aprvvo.setTotal(totalPage); // 총 데이터 수
+		aprvvo.setStartPage(vo.getStartPage());
+		aprvvo.setCurrentPage(vo.getCurrentPage()); // 현재 페이지
+		*/
+	}
+	// 기안서 상세조회
+	@RequestMapping("/approve/approveDtl")
+	public String aprvDtl(@ModelAttribute AprvInfoVO vo, Model model)throws Exception{
+		
+		model.addAttribute("vo", vo);
+		
+		return "approve/APRVPOP02";
+	}
+	
+<<<<<<< .mine
+	@RequestMapping("/approve/userDoc")
+	@ResponseBody
+	public UserVO userDoc(HttpServletRequest request) throws Exception{
+		
+		HttpSession session = request.getSession();
+		UserVO uservo = (UserVO)session.getAttribute("MallUser");
+		
+		ComCodeVO cvo = new ComCodeVO();
+		cvo.setComGrpCd("AP01");
+		List<ComCodeVO> list1 = CdService.selectComCodeList(cvo);
+		
+		cvo.setComGrpCd("AP02");
+		List<ComCodeVO> list2 = CdService.selectComCodeList(cvo);
+		
+		cvo.setComGrpCd("AP03");
+		List<ComCodeVO> list3 = CdService.selectComCodeList(cvo);
+		
+		cvo.setComGrpCd("AP04");
+		List<ComCodeVO> list4 = CdService.selectComCodeList(cvo);
+		
+		cvo.s
+		
+		return uservo;
+	}
+||||||| .r44
+=======
+	@RequestMapping("/approve/getApproveDtl")
+	@ResponseBody
+	public AprvVO getApproveDtl(@ModelAttribute("AprvVO")AprvVO vo)throws Exception{
+		
+		vo = service.selectApproveDtl(vo);
+		
+		// Aprv라인
+		List<AprvLineVO> list1 = service.selectAprvLineList(vo);
+		vo.setLinelist(list1);
+		
+		// Aprv파일
+		List<AprvFileVO> list2 = service.selectAprvFileList(vo);
+		vo.setFilelist(list2);
+		
+		return vo;
+	}
+	
+>>>>>>> .r93
+}

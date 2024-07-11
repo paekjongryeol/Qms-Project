@@ -1,0 +1,65 @@
+package com.qms.approve.controller;
+
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.qms.approve.service.ApproveService;
+import com.qms.code.service.CodeService;
+import com.qms.table.vo.common.ComCodeVO;
+import com.qms.user.vo.UserVO;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+
+
+@Controller
+public class ApproveController {
+
+	@Autowired
+	ApproveService service;
+	
+	@Autowired
+	CodeService CdService;
+	
+	/*
+	 *  기안서 작성
+     *  작성자 : 이성호
+     *  작성일 : 24.05.20
+	*/
+	@RequestMapping("/approve/write")
+	public String approveWrite() throws Exception{
+		return "approve/aprv01";
+	}
+	
+	
+	@RequestMapping("/approve/userDoc")
+	@ResponseBody
+	public UserVO userDoc(HttpServletRequest request) throws Exception{
+		
+		HttpSession session = request.getSession();
+		UserVO uservo = (UserVO)session.getAttribute("MallUser");
+		
+		ComCodeVO cvo = new ComCodeVO();
+		cvo.setComGrpCd("AP01");
+		List<ComCodeVO> list1 = CdService.selectComCodeList(cvo);
+		
+		cvo.setComGrpCd("AP02");
+		List<ComCodeVO> list2 = CdService.selectComCodeList(cvo);
+		
+		cvo.setComGrpCd("AP03");
+		List<ComCodeVO> list3 = CdService.selectComCodeList(cvo);
+		
+		cvo.setComGrpCd("AP04");
+		List<ComCodeVO> list4 = CdService.selectComCodeList(cvo);
+		
+		cvo.s
+		
+		return uservo;
+	}
+}

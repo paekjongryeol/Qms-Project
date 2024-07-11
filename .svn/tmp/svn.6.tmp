@@ -1,0 +1,68 @@
+package com.qms.common.service;
+
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.List;
+
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.stereotype.Service;
+
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletResponse;
+
+@Service
+public class ExcelService {
+
+    public Workbook downloadExcel(HttpServletResponse response, List<?> dataList, String fileName) throws Exception {
+        try (Workbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("Data Sheet");
+
+            if (!dataList.isEmpty()) {
+                // 첫 번째 객체를 기반으로 헤더 생성
+                createHeaderRow(sheet, dataList.get(0).getClass());
+
+                // 데이터 행 생성
+                for (int rowNum = 0; rowNum < dataList.size(); rowNum++) {
+                    createCellRow(sheet, dataList.get(rowNum), rowNum + 1);
+                }
+            }
+
+            // 파일 다운로드를 위한 설정
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            //response.setContentType("ms-vnd/excel");
+            response.setHeader("Content-Disposition", "attachment; filename=" + fileName);
+
+            // 파일 스트림을 응답에 쓰기
+            try (ServletOutputStream outputStream = response.getOutputStream()) {
+                workbook.write(outputStream);
+                response.flushBuffer();
+           }
+           return workbook;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+        
+    }
+
+    private void createHeaderRow(Sheet sheet, Class<?> base) {
+        Row headerRow = sheet.createRow(0);				//해더행 생성
+        Field[] data = base.getDeclaredFields();		//객체의 정보를 가져와 필드배열로 저장
+        for (int i = 0; i < data.length; i++) {			//반복문을 사용하여 해더생성하며 컬럼값을 입력
+            headerRow.createCell(i).setCellValue(data[i].getName());
+        }
+    }
+
+    private void createCellRow(Sheet sheet, Object object, int rowNum) throws Exception {
+        Row cellRow = sheet.createRow(rowNum);						//셀행 생성
+        Field[] data = object.getClass().getDeclaredFields();		//객체의 정보를 가져와 필드배열로 저장
+        for (int i = 0; i < data.length; i++) {						//반복문을 사용하며, 필드 접근하는 data[i].setAccessible(true);설정을 한후
+            data[i].setAccessible(true);							//셀을 생성하여 리스트를 입력
+            Object value = data[i].get(object);						
+            cellRow.createCell(i).setCellValue(value != null ? value.toString() : ""); //필드값이 널이 아닌경우 문자열로 변환하여 저장, null인 경우는 빈 상태
+        }
+    }
+}
